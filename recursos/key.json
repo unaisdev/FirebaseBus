@@ -1,0 +1,12 @@
+{
+  "type": "service_account",
+  "project_id": "autobusesidrl",
+  "private_key_id": "8d25dd712825cabfc711562e28089825344759b1",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCOrIvI6JUc07Gh\nEhNFQ5WGYlw+Dv3ZhAIMSv0+l7V58mjypcm6yauWvVMzOy0w1vsF1WT7McvTcvBq\n5GLotw3AXCf1OdOkqdu96FfeTpf42mmsuJooLOVyhwKFu8f43mkCU/wNo79nUL1p\n19sjmO2andZo+nRaBr2NIknq5WAShiTRCnV54P4COC/s16vXM9nWYsJx6W99ykGl\n8/E0QK69+KK96hLKcWFFkxgjI0j2fDBf3hn/5yJYZGxYM/WRUk47J8LE4x5RtRR5\nCdA9TGWLiINMGfZ6IPZkbh9Lg5d5qOv2fKA9zA/Ez7E0EfrIYCXHIi/9lAVBBzG5\n7VJcHxH7AgMBAAECggEAAhKPlUOLpveMRQK2NPNeYK1dGamuFlLMlNEiDJ63jCXx\nUFUIMSZsz6vAYaYiaes1ikgnR17ZzyCETYkzxp2iHYE5M167rFCrWH7fh+MsYfkK\nP/AOjTbZvmgnqTmpFfxlGhuONcSDK0UI+1ifXk0CZpSUYMICnqwqZLpyyG68johO\nws9gfS8CgQ+/hWHcQ3/S/ToIZ5cfPzD4YKMOKErdWL+2l2lloPqKibbhYB4PeVjP\n4qJ3Al3Ef0LfTIOXf82P/mvBK/TNVbIB04xyLfdaxNInfBxDT+h0gT/fxOkVfMEy\nziVGGYAWylxZxfBznE7zuE14H/k42NoCKHfJvh5sQQKBgQDDm2Y3rbY1a0ZDiIfS\nqrxDt0DcCS83blshzG7K48L1VMICPud2UmApPaPiIWE58jJxmrJwSa9JqdaOMc1r\nnHaVU5VezgVOwZvThxlWFKoPWJ91Z/9cgFk2XGyHQT95Kpj6S1s9JJjtPVXpd1Ef\nyM83cfFNfKtYpUcfOYpdF7eNZQKBgQC6uV6DkBENaSmzFFgCwfTEF1QEFxtWoalT\nDDouBOwSys+LOAWO7DCKySqdiXBrriklGpbIrnrXVF7tX7UOa/e+SYWXrB4AXsvv\n2r11NSEQPFfDEEXILox6u4jZcUwUIj09I5Rp4cEKNOIUkSE+09oQ9BCAO7TSxgHz\nt8vGgJhb3wKBgQDBGlZsvQbV8ZMp9Ezxwi+dQfm7vy1nsYAx+5mcngDHJOdqRCNI\ngcYAsKNrB7zt8ZWu5SMnCvcK56myMqQyigHfJOae8w/2Ude9mO+ANWI1SC4TP5mu\n/d4UdmWFmPpKaa0f2ui1kb2O5zA7DNl/YUR/3fJzppGZL4Do6GsZv+IqqQKBgQCg\n6S/+1n8rfG3YCncR4U1qUuQvJi6ECIqfq9DTaaB7TVVvlxaLJRVr9JIJ8q/zy8Ff\nXTuFs37e47FuhGTGCdsUm81JeKTeEtNSXsGYKPHWSPokenh4W0zqU4RKRm2WiC8X\n6fpzCH5PqmUN7kelGfI5W+qAZ3Obk9GI0uIDrTwfJwKBgB5mbxGgRVAWlByiNU9n\nWIpIEh5YmuBfufi3o0XJf+kNExBbpHvbbo9Pp/M3U1zo/gpPRyfcP7/yCIMEt5X0\nV8JDvqX0/x2vwSIJeNEtmcEO8aRduPEmXtGc78fCsan6HleihN5+acgqS21/1/H6\nY12syaUXNl47JSQdzWYKptjO\n-----END PRIVATE KEY-----\n",
+  "client_email": "firebase-adminsdk-ar5qj@autobusesidrl.iam.gserviceaccount.com",
+  "client_id": "103142260703748679138",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-ar5qj%40autobusesidrl.iam.gserviceaccount.com"
+}

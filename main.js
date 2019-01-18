@@ -5,22 +5,21 @@ var bodyParser = require("body-parser");
 const { app } = require('electron');
 const fs = require('fs');
 const Window = require('./Window')
-const firebase = require('firebase-admin')
+const Firestore = require('@google-cloud/firestore');
+
+const firestore = new Firestore({
+  projectId: 'autobusesidrl',
+  keyFilename: 'recursos/key.json',
+  timestampsInSnapshots: true
+});
 
 require('electron-reload')(__dirname);
+var autobusesRef = firestore.collection('Autobus').doc("A1");
+var rutasRef = firestore.collection('Rutas');
+
 
 // definimos `window`, acá vamos a guardar la instancia de BrowserWindow actual
 let window;
-
-var config = {
-    apiKey: "AIzaSyAncSYM2c86zWuQw3s1cxEkbSHVxSaAQCk",
-    authDomain: "autobusesidrl.firebaseapp.com",
-    databaseURL: "https://autobusesidrl.firebaseio.com",
-    projectId: "autobusesidrl",
-    storageBucket: "autobusesidrl.appspot.com",
-    messagingSenderId: "897900550232"
-  };
-firebase.initializeApp(config);
 
 // cuando nuestra app haya terminado de iniciar va a disparar el evento `ready`
 // lo escuchamos y ejecutamos la función `createWindow`
@@ -39,11 +38,11 @@ app.on('window-all-closed', () => {
 function createWindow() {
 	// instanciamos BrowserWindow, esto va a iniciar un proceso `renderer`
     let mainWindow = new Window({
+
         file: path.join('renderers', 'index.html')
     })
 
     let newBus
-   
     
     mainWindow.once('show', () => {
         var rutas = JSON.parse(fs.readFileSync('recursos/DonostiIrun.json', 'utf8'))
@@ -54,18 +53,14 @@ function createWindow() {
             ruta.push(element)
         });
 
-        var autobusesRef = firebase.collection('Autobuses');
-        var query = autobusesRef.get()
-            .then(snapshot => {
-                snapshot.forEach(doc => {
-                    console.log(doc.id, '=>', doc.data());
-                });
+        autobusesRef.get()
+            .then(doc => {  
+                mainWindow.send('buses', doc)
             })
             .catch(err => {
-                console.log('Error getting documents', err);
-            });
-        
-        mainWindow.send('rutes', ruta)
+                console.log("error " + err)
+            })
+            
     })
 
     app.on('newBus', () => {
