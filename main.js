@@ -14,7 +14,7 @@ const firestore = new Firestore({
 });
 
 require('electron-reload')(__dirname);
-var autobusesRef = firestore.collection('Autobus').doc("A1");
+var autobusesRef = firestore.collection('Autobus');
 var rutasRef = firestore.collection('Rutas');
 
 
@@ -43,24 +43,28 @@ function createWindow() {
     })
 
     let newBus
+
+    var rutas = JSON.parse(fs.readFileSync('recursos/DonostiIrun.json', 'utf8'))
+
+    var ruta = []
+    var buses = []
     
     mainWindow.once('show', () => {
-        var rutas = JSON.parse(fs.readFileSync('recursos/DonostiIrun.json', 'utf8'))
-
-        var ruta = []
-
         rutas.gpx.trk.trkseg.trkpt.forEach(element => {
             ruta.push(element)
         });
 
         autobusesRef.get()
-            .then(doc => {  
-                mainWindow.send('buses', doc)
+            .then(snapshot => {
+                snapshot.forEach(doc => {
+                    buses.push(doc._fieldsProto)
+                });
+                mainWindow.send('buses', buses)
+
             })
             .catch(err => {
-                console.log("error " + err)
-            })
-            
+                console.log('Error getting documents', err);
+            }); 
     })
 
     app.on('newBus', () => {

@@ -15,14 +15,17 @@ document.getElementById('newBus').addEventListener('click', () => {
 // on receive todos
 ipcRenderer.on('buses', (event, buses) => {
   // get the todoList ul
+  console.log(buses)
   const tablaBuses = document.getElementById('buses')
 
   // create html string
   const busItems = buses.reduce((html, bus) => {
+    console.log(bus)
     html += `<tr>
-            <td>${bus.nombre}</td>
-            <td>${bus.id}</td>
-            <td><button id="${bus.nombre}" class="uk-button uk-button-default" type="button">LANZAR!</button></td>
+            <td>${bus.nombre.stringValue}</td>
+            <td>${bus.latLong.geoPointValue.latitude}</td>
+            <td>${bus.latLong.geoPointValue.longitude}</td>
+            <td><button class="uk-button uk-button-default" type="button">LANZAR!</button></td>
         </tr>`
 
     return html
@@ -33,7 +36,7 @@ ipcRenderer.on('buses', (event, buses) => {
 
   // add click handlers to delete the clicked todo
   tablaBuses.querySelectorAll('button').forEach(item => {
-    item.addEventListener('click', deleteTodo)
+    item.addEventListener('click', lanzarBus)
   })
 })
 
