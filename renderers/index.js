@@ -1,10 +1,13 @@
 'use strict'
 
 const { ipcRenderer } = require('electron')
+var rutas = []
+var bus = "irun"
 
 // delete todo by its text value ( used below in event listener)
 const lanzarBus = (e) => {
-  ipcRenderer.send('lanzarBus', e.target.textContent)
+  console.log("MANDANDO" + bus + rutas)
+  ipcRenderer.send('comenzarRuta', bus, rutas)
 }
 
 // create add todo window button
@@ -33,29 +36,17 @@ ipcRenderer.on('buses', (event, buses) => {
 
   // set list html to the todo items
   tablaBuses.innerHTML = busItems
-
-  // add click handlers to delete the clicked todo
-  tablaBuses.querySelectorAll('button').forEach(item => {
-    item.addEventListener('click', lanzarBus)
-  })
 })
+
 
 ipcRenderer.on('rutes', (event, rutes) => {
     // get the todoList ul
+    rutas = rutes
+    console.log(rutes)
     const tablaRutas = document.getElementById('buses')
-  
-    // create html string
-    const todoItems = todos.reduce((html, todo) => {
-      html += `<li class="todo-item">${todo}</li>`
-  
-      return html
-    }, '')
-  
-    // set list html to the todo items
-    tablaBuses.innerHTML = todoItems
-  
+ 
     // add click handlers to delete the clicked todo
-    tablaBuses.querySelectorAll('button').forEach(item => {
+    tablaRutas.querySelectorAll('tr td button').forEach(item => {
       item.addEventListener('click', lanzarBus)
     })
   })

@@ -2,7 +2,7 @@
 const path = require('path')
 var bodyParser = require("body-parser");
 
-const { app } = require('electron');
+const { app, ipcRenderer } = require('electron');
 const fs = require('fs');
 const Window = require('./Window')
 const Firestore = require('@google-cloud/firestore');
@@ -34,6 +34,43 @@ app.on('window-all-closed', () => {
 	}
 });
 
+
+function sleep(ms){
+    return new Promise(resolve => {
+        setTimeout(resolve, ms)
+    })
+}
+/*
+async function comenzarRuta(bus, rutes){
+    console.log("LANZANDO RUTA !")
+    await Promise.all(rutes.map(async (element) => {
+        autobusesRef.doc(bus).update({
+            GeoPoint: {
+                latitude: element._lat,
+                longitude: element._lat
+            }
+        })
+        .then(function() {
+            console.log("Document successfully updated!");
+        })
+        .catch(function(error) {
+            // The document probably doesn't exist.
+            console.error("Error updating document: ", error);
+        });
+        await sleep(500)
+        console.log(contents)
+      }));
+    rutes.forEach(element => {
+
+    })
+ }
+*/
+
+function comenzarRuta(){
+    console.log("comenzando")
+}
+
+
 // definimos la función `createWindow`
 function createWindow() {
 	// instanciamos BrowserWindow, esto va a iniciar un proceso `renderer`
@@ -60,12 +97,41 @@ function createWindow() {
                     buses.push(doc._fieldsProto)
                 });
                 mainWindow.send('buses', buses)
+                console.log(ruta)
+                mainWindow.send('rutes', ruta)
 
             })
             .catch(err => {
                 console.log('Error getting documents', err);
             }); 
     })
+
+    
+app.on('comenzarRuta', async (bus, rutes) => {
+    
+    await Promise.all(rutes.map(async (element) => {
+        console.log("LANZANDO RUTA !")
+        autobusesRef.doc(bus).update({
+            GeoPoint: {
+                latitude: element._lat,
+                longitude: element._lat
+            }
+        })
+        .then(function() {
+            console.log("Document successfully updated!");
+        })
+        .catch(function(error) {
+            // The document probably doesn't exist.
+            console.error("Error updating document: ", error);
+        });
+        await sleep(500)
+        console.log(contents)
+    }));
+    rutes.forEach(element => {
+
+    })
+  })
+
 
     app.on('newBus', () => {
         // if addTodoWin does not already exist
