@@ -2,12 +2,15 @@
 
 const { ipcRenderer } = require('electron')
 var rutas = []
-var bus = "irun"
+var bus = "A1"
 
 // delete todo by its text value ( used below in event listener)
 const lanzarBus = (e) => {
   console.log("MANDANDO" + bus + rutas)
-  ipcRenderer.send('comenzarRuta', bus, rutas)
+
+  ipcRenderer.send('lanzarBus', bus, rutas)
+  console.log("ee" + bus)
+
 }
 
 // create add todo window button
@@ -23,7 +26,6 @@ ipcRenderer.on('buses', (event, buses) => {
 
   // create html string
   const busItems = buses.reduce((html, bus) => {
-    console.log(bus)
     html += `<tr>
             <td>${bus.nombre.stringValue}</td>
             <td>${bus.latLong.geoPointValue.latitude}</td>

@@ -2,9 +2,10 @@
 const path = require('path')
 var bodyParser = require("body-parser");
 
-const { app, ipcRenderer } = require('electron');
+const { app, ipcMain } = require('electron');
 const fs = require('fs');
 const Window = require('./Window')
+var sleep = require('system-sleep');
 const Firestore = require('@google-cloud/firestore');
 
 const firestore = new Firestore({
@@ -14,7 +15,6 @@ const firestore = new Firestore({
 });
 
 require('electron-reload')(__dirname);
-var autobusesRef = firestore.collection('Autobus');
 var rutasRef = firestore.collection('Rutas');
 
 
@@ -34,12 +34,6 @@ app.on('window-all-closed', () => {
 	}
 });
 
-
-function sleep(ms){
-    return new Promise(resolve => {
-        setTimeout(resolve, ms)
-    })
-}
 /*
 async function comenzarRuta(bus, rutes){
     console.log("LANZANDO RUTA !")
@@ -63,13 +57,7 @@ async function comenzarRuta(bus, rutes){
     rutes.forEach(element => {
 
     })
- }
-*/
-
-function comenzarRuta(){
-    console.log("comenzando")
-}
-
+}*/
 
 // definimos la función `createWindow`
 function createWindow() {
@@ -79,9 +67,14 @@ function createWindow() {
         file: path.join('renderers', 'index.html')
     })
 
+    mainWindow.webContents.openDevTools()
+
+    var autobuses = firestore.collection('Autobus');
+
     let newBus
 
     var rutas = JSON.parse(fs.readFileSync('recursos/DonostiIrun.json', 'utf8'))
+    var posRutas = 1
 
     var ruta = []
     var buses = []
@@ -91,13 +84,12 @@ function createWindow() {
             ruta.push(element)
         });
 
-        autobusesRef.get()
+        autobuses.get()
             .then(snapshot => {
                 snapshot.forEach(doc => {
                     buses.push(doc._fieldsProto)
                 });
                 mainWindow.send('buses', buses)
-                console.log(ruta)
                 mainWindow.send('rutes', ruta)
 
             })
@@ -106,34 +98,32 @@ function createWindow() {
             }); 
     })
 
-    
-app.on('comenzarRuta', async (bus, rutes) => {
-    
-    await Promise.all(rutes.map(async (element) => {
-        console.log("LANZANDO RUTA !")
-        autobusesRef.doc(bus).update({
-            GeoPoint: {
-                latitude: element._lat,
-                longitude: element._lat
-            }
-        })
-        .then(function() {
-            console.log("Document successfully updated!");
-        })
-        .catch(function(error) {
-            // The document probably doesn't exist.
-            console.error("Error updating document: ", error);
-        });
-        await sleep(500)
-        console.log(contents)
-    }));
-    rutes.forEach(element => {
-
-    })
-  })
+    ipcMain.on('lanzarBus', (event, bus, rutes) => {
+        const autobusesRef = firestore.doc('Autobus/' + bus);
 
 
-    app.on('newBus', () => {
+        const actualizarPosicion = (e) => {
+        autobusesRef.update({
+                "latLong": new Firestore.GeoPoint(parseFloat(rutes[posRutas]._lat) , parseFloat(rutes[posRutas]._lon))
+            })
+            .then(function() {
+                console.log("Bus en camino...");
+            })
+            .catch(function(error) {
+                // The document probably doesn't exist.
+                console.error("Ha ocurrido un error con la posicion! ", error);
+            });
+            posRutas = posRutas + 40
+            
+            sleep(5000)
+            actualizarPosicion()
+        }
+        actualizarPosicion()
+
+        
+      })
+
+      ipcMain.on('newBus', () => {
         // if addTodoWin does not already exist
         if (!newBus) {
           // create a new add todo window
@@ -153,7 +143,7 @@ app.on('comenzarRuta', async (bus, rutes) => {
       })
 
 
-	mainWindow.on('closed', () => {
+      ipcMain.on('closed', () => {
 		// por último escuchamos el evento `closed` de la ventana para limpar la variable `window`
 		// de esta forma permitimos matar la ventana sin matar al aplicación
 		window = null
