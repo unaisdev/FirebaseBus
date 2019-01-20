@@ -5,8 +5,9 @@ var bodyParser = require("body-parser");
 const { app, ipcMain } = require('electron');
 const fs = require('fs');
 const Window = require('./Window')
-var sleep = require('system-sleep');
+
 const Firestore = require('@google-cloud/firestore');
+const delay = require('delay');
 
 const firestore = new Firestore({
   projectId: 'autobusesidrl',
@@ -70,6 +71,7 @@ function createWindow() {
     mainWindow.webContents.openDevTools()
 
     var autobuses = firestore.collection('Autobus');
+    var rutas = firestore.collection('Ruta');
 
     let newBus
 
@@ -91,17 +93,56 @@ function createWindow() {
                 });
                 mainWindow.send('buses', buses)
                 mainWindow.send('rutes', ruta)
+                
 
             })
             .catch(err => {
                 console.log('Error getting documents', err);
-            }); 
+            });
+
+      
     })
 
+ 
+
+
     ipcMain.on('lanzarBus', (event, bus, rutes) => {
-        const autobusesRef = firestore.doc('Autobus/' + bus);
+        const autobusesRef = firestore.collection('Autobus').doc(bus);
 
+        autobusesRef.onSnapshot(function(doc) {
+            console.log("CAMBIOS ESCUCHADOS EN " + doc._fieldsProto.nombre.stringValue)
 
+            mainWindow.send('posBus', doc._fieldsProto)
+        });
+
+        actualizarPosicion()
+
+        async function actualizarPosicion() {
+            autobusesRef.update({
+                "latLong": new Firestore.GeoPoint(parseFloat(rutes[posRutas]._lat) , parseFloat(rutes[posRutas]._lon))
+            })
+            .then(function() {
+                console.log("Bus en camino... DATOS CAMBIADOS");
+                posRutas = posRutas + 99
+
+            })
+            .catch(function(error) {
+                // The document probably doesn't exist.
+                console.error("Ha ocurrido un error con la posicion! ", error);
+            });
+            
+
+        
+            await delay(3000)
+            // Executed 100 milliseconds later
+            if(posRutas < rutes.length){
+                console.log("pos: " + posRutas)
+                actualizarPosicion()
+                console.log("while")
+            }
+        }
+
+        /*
         const actualizarPosicion = (e) => {
         autobusesRef.update({
                 "latLong": new Firestore.GeoPoint(parseFloat(rutes[posRutas]._lat) , parseFloat(rutes[posRutas]._lon))
@@ -115,11 +156,11 @@ function createWindow() {
             });
             posRutas = posRutas + 40
             
-            sleep(5000)
+            sleep.sleep(3)
             actualizarPosicion()
         }
         actualizarPosicion()
-
+*/
         
       })
 

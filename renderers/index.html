@@ -8,36 +8,38 @@
     <body>
         <div class="uk-container">
                 <div class="uk-position-center">
-                    <div class="uk-grid-small uk-child-width-expand@s uk-text-center" uk-grid>
-                        <div>
-                            <div class="uk-card uk-card-default uk-card-body">
-                                    <button id="newBus" class="uk-button uk-button-default uk-button-small"> NUEVO AUTOBUS <i class="fas fa-bus-alt"></i></button>
-                            </div>
-                        </div>
-                        <div>
+                    <ul class="uk-grid" data-uk-grid-margin>
+                        <!-- These elements have a width in percent -->
+                        <li class="uk-width-medium--5">
                             <div class="uk-card uk-card-default uk-card-body">
                                 <table class="uk-table uk-table-middle uk-table-divider">
                                     <thead>
                                         <tr>
                                             <th class="uk-width-small">AUTOBUS</th>
-                                            <th>LINEA</th>
-                                            <th></th>
+                                            <th>LATITUD</th>
+                                            <th>LONGITUD</th>
+                                            <th>ACCIONES</th>
                                         </tr>
                                     </thead>
                                     <tbody id="buses">
-                                        <tr>
-                                            <td>Table Data</td>
-                                            <td>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</td>
-                                            <td><button class="uk-button uk-button-default" type="button">Button</button></td>
-                                        </tr>
-                                        <tr>
-                                            <td>Table Data</td>
-                                            <td>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</td>
-                                            <td><button class="uk-button uk-button-default" type="button">Button</button></td>
-                                        </tr>
+                                        
                                     </tbody>
                                 </table>                  
+                            </div></li>
+                        <li class="uk-width-medium-3-10">
+                            
+                            <div class="uk-card uk-card-primary uk-card-body">
+                                <button id="newBus" class="uk-button uk-button-default uk-button-small"> CARGAR RUTA <i class="fas fa-bus-alt"></i></button>
                             </div>
+                        </li>
+                    </ul>
+
+                    <div class="uk-grid-large uk-child-width-expand@s uk-text-center" uk-grid>
+                        <div>
+                            
+                        </div>
+                        <div>
+                            
                         </div>
     
                     </div>

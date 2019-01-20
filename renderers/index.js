@@ -26,7 +26,7 @@ ipcRenderer.on('buses', (event, buses) => {
 
   // create html string
   const busItems = buses.reduce((html, bus) => {
-    html += `<tr>
+    html += `<tr id= "${bus.nombre.stringValue}">
             <td>${bus.nombre.stringValue}</td>
             <td>${bus.latLong.geoPointValue.latitude}</td>
             <td>${bus.latLong.geoPointValue.longitude}</td>
@@ -38,6 +38,21 @@ ipcRenderer.on('buses', (event, buses) => {
 
   // set list html to the todo items
   tablaBuses.innerHTML = busItems
+})
+
+ipcRenderer.on('posBus', (event, bus) => {
+  // get the todoList ul
+  console.log(" CAMBIAMOS HTML " + bus)
+  const trBus = document.getElementById(bus.nombre.stringValue)
+
+  // create html string
+  const busHtml =  `<td>${bus.nombre.stringValue}</td>
+            <td>${bus.latLong.geoPointValue.latitude}</td>
+            <td>${bus.latLong.geoPointValue.longitude}</td>
+            <td><button class="uk-button uk-button-default" type="button">LANZAR!</button></td>`
+
+  // set list html to the todo items
+  trBus.innerHTML = busHtml
 })
 
 
