@@ -5,6 +5,7 @@ var bodyParser = require("body-parser");
 const { app, ipcMain } = require('electron');
 const fs = require('fs');
 const Window = require('./Window')
+const HashMap = require('hashmap');
 
 const Firestore = require('@google-cloud/firestore');
 const delay = require('delay');
@@ -16,8 +17,6 @@ const firestore = new Firestore({
 });
 
 require('electron-reload')(__dirname);
-var rutasRef = firestore.collection('Rutas');
-
 
 // definimos `window`, acá vamos a guardar la instancia de BrowserWindow actual
 let window;
@@ -35,31 +34,6 @@ app.on('window-all-closed', () => {
 	}
 });
 
-/*
-async function comenzarRuta(bus, rutes){
-    console.log("LANZANDO RUTA !")
-    await Promise.all(rutes.map(async (element) => {
-        autobusesRef.doc(bus).update({
-            GeoPoint: {
-                latitude: element._lat,
-                longitude: element._lat
-            }
-        })
-        .then(function() {
-            console.log("Document successfully updated!");
-        })
-        .catch(function(error) {
-            // The document probably doesn't exist.
-            console.error("Error updating document: ", error);
-        });
-        await sleep(500)
-        console.log(contents)
-      }));
-    rutes.forEach(element => {
-
-    })
-}*/
-
 // definimos la función `createWindow`
 function createWindow() {
 	// instanciamos BrowserWindow, esto va a iniciar un proceso `renderer`
@@ -68,23 +42,44 @@ function createWindow() {
         file: path.join('renderers', 'index.html')
     })
 
-    mainWindow.webContents.openDevTools()
-
     var autobuses = firestore.collection('Autobus');
     var rutas = firestore.collection('Ruta');
+    
 
-    let newBus
+    var LineaA15 = JSON.parse(fs.readFileSync('recursos/LineaA-15.json', 'utf8'))
+    var LineaH6 = JSON.parse(fs.readFileSync('recursos/LineaH-6.json', 'utf8'))
+    var LineaE25 = JSON.parse(fs.readFileSync('recursos/LineaE-25.json', 'utf8'))
 
-    var rutas = JSON.parse(fs.readFileSync('recursos/DonostiIrun.json', 'utf8'))
-    var posRutas = 1
+    mainWindow.webContents.openDevTools()
 
+    var posArray = {}
     var ruta = []
     var buses = []
+    var rutes = []
     
-    mainWindow.once('show', () => {
-        rutas.gpx.trk.trkseg.trkpt.forEach(element => {
-            ruta.push(element)
-        });
+    mainWindow.once('show', () => {   
+        /*rutas.doc(LineaH6.ruta.idRuta).set(LineaH6).then(function() {
+            console.log("Document successfully written!");
+        });*/
+
+        LineaA15.ruta.trk.forEach(element=> {
+            console.log(element)
+            element.trkpt.forEach(element => {
+                console.log(element)
+                ruta.push(element)
+            });
+        })
+
+        rutas.get()
+        .then(snapshot => {
+            snapshot.forEach(doc => {
+                rutes.push(doc._fieldsProto.ruta)
+            });
+
+        })
+        .catch(err => {
+            console.log('Error getting documents', err);
+        });      
 
         autobuses.get()
             .then(snapshot => {
@@ -92,75 +87,49 @@ function createWindow() {
                     buses.push(doc._fieldsProto)
                 });
                 mainWindow.send('buses', buses)
-                mainWindow.send('rutes', ruta)
-                
+                mainWindow.send('pro', rutes)                
 
             })
             .catch(err => {
                 console.log('Error getting documents', err);
-            });
-
-      
+            });      
     })
-
- 
-
 
     ipcMain.on('lanzarBus', (event, bus, rutes) => {
         const autobusesRef = firestore.collection('Autobus').doc(bus);
+        posArray[bus] = 1
+        console.log(posArray)
 
         autobusesRef.onSnapshot(function(doc) {
             console.log("CAMBIOS ESCUCHADOS EN " + doc._fieldsProto.nombre.stringValue)
 
             mainWindow.send('posBus', doc._fieldsProto)
         });
-
+        
         actualizarPosicion()
 
         async function actualizarPosicion() {
             autobusesRef.update({
-                "latLong": new Firestore.GeoPoint(parseFloat(rutes[posRutas]._lat) , parseFloat(rutes[posRutas]._lon))
+                "latLong": new Firestore.GeoPoint(parseFloat(rutes[posArray[bus]]._lat) , parseFloat(rutes[posArray[bus]]._lon))
             })
             .then(function() {
                 console.log("Bus en camino... DATOS CAMBIADOS");
-                posRutas = posRutas + 99
+                posArray[bus] = posArray[bus] + 1
 
             })
             .catch(function(error) {
                 // The document probably doesn't exist.
                 console.error("Ha ocurrido un error con la posicion! ", error);
             });
-            
-
-        
-            await delay(3000)
-            // Executed 100 milliseconds later
-            if(posRutas < rutes.length){
-                console.log("pos: " + posRutas)
+                
+            await delay(200)
+            if(posArray[bus]  < rutes.length){
+                console.log("POS " + bus + ": " + posArray[bus] )
                 actualizarPosicion()
-                console.log("while")
+            }else{
+                console.log("RUTA FINALIZADA")
             }
         }
-
-        /*
-        const actualizarPosicion = (e) => {
-        autobusesRef.update({
-                "latLong": new Firestore.GeoPoint(parseFloat(rutes[posRutas]._lat) , parseFloat(rutes[posRutas]._lon))
-            })
-            .then(function() {
-                console.log("Bus en camino...");
-            })
-            .catch(function(error) {
-                // The document probably doesn't exist.
-                console.error("Ha ocurrido un error con la posicion! ", error);
-            });
-            posRutas = posRutas + 40
-            
-            sleep.sleep(3)
-            actualizarPosicion()
-        }
-        actualizarPosicion()
-*/
         
       })
 
@@ -183,10 +152,9 @@ function createWindow() {
         }
       })
 
-
       ipcMain.on('closed', () => {
 		// por último escuchamos el evento `closed` de la ventana para limpar la variable `window`
 		// de esta forma permitimos matar la ventana sin matar al aplicación
 		window = null
-	});
+    });
 }
