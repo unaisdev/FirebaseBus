@@ -9,7 +9,7 @@
     "electron": "^4.0.1",
     "electron-reload": "^1.4.0",
     "firebase": "^5.8.0",
-    "firebase-admin": "^6.5.0",
+    "firebase-admin": "^6.5.1",
     "grpc": "^1.18.0",
     "hashmap": "^2.3.0",
     "node-pre-gyp": "^0.12.0",

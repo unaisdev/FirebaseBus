@@ -6,6 +6,14 @@ const { app, ipcMain } = require('electron');
 const fs = require('fs');
 const Window = require('./Window')
 const HashMap = require('hashmap');
+var admin = require("firebase-admin");
+
+var serviceAccount = require("./recursos/key.json");
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+  databaseURL: "https://autobusesidrl.firebaseio.com"
+});
 
 const Firestore = require('@google-cloud/firestore');
 const delay = require('delay');
@@ -45,7 +53,6 @@ function createWindow() {
     var autobuses = firestore.collection('Autobus');
     var rutas = firestore.collection('Ruta');
     
-
     var LineaA15 = JSON.parse(fs.readFileSync('recursos/LineaA-15.json', 'utf8'))
     var LineaH6 = JSON.parse(fs.readFileSync('recursos/LineaH-6.json', 'utf8'))
     var LineaE25 = JSON.parse(fs.readFileSync('recursos/LineaE-25.json', 'utf8'))
@@ -53,20 +60,19 @@ function createWindow() {
     mainWindow.webContents.openDevTools()
 
     var posArray = {}
-    var ruta = []
+    var ruta = { id: [], puntos: [] }
     var buses = []
     var rutes = []
     
     mainWindow.once('show', () => {   
+        
         /*rutas.doc(LineaH6.ruta.idRuta).set(LineaH6).then(function() {
             console.log("Document successfully written!");
         });*/
-
+        ruta.id.push(LineaA15.ruta.idRuta)
         LineaA15.ruta.trk.forEach(element=> {
-            console.log(element)
             element.trkpt.forEach(element => {
-                console.log(element)
-                ruta.push(element)
+                ruta.puntos.push(element)
             });
         })
 
@@ -87,7 +93,7 @@ function createWindow() {
                     buses.push(doc._fieldsProto)
                 });
                 mainWindow.send('buses', buses)
-                mainWindow.send('pro', rutes)                
+                mainWindow.send('rutes', ruta)                
 
             })
             .catch(err => {
@@ -96,6 +102,41 @@ function createWindow() {
     })
 
     ipcMain.on('lanzarBus', (event, bus, rutes) => {
+
+        // This registration token comes from the client FCM SDKs.
+
+        // See documentation on defining a message payload.
+        var message = {
+            android: {
+              ttl: 3600 * 1000, // 1 hour in milliseconds
+              priority: 'normal',
+              notification: {
+                title: rutes.idRuta,
+                body: '$GOOG gained 11.80 points to close at 835.67, up 1.43% on the day.',
+                icon: 'stock_ticker_update',
+                color: '#f45342'
+              }
+            },
+            topic: 'Averias'
+          };
+
+          console.log("mensaje creado")
+
+        // Send a message to the device corresponding to the provided
+        // registration token.
+        var dryRun = true;
+        admin.messaging().send(message)
+        .then((response) => {
+            // Response is a message ID string.
+            console.log('Successfully sent message:', response);
+        })
+        .catch((error) => {
+            console.log('Error sending message:', error);
+        });
+
+        console.log("LLEGA?")
+
+        
         const autobusesRef = firestore.collection('Autobus').doc(bus);
         posArray[bus] = 1
         console.log(posArray)
@@ -109,8 +150,9 @@ function createWindow() {
         actualizarPosicion()
 
         async function actualizarPosicion() {
+            console.log("lat: " + rutes.puntos[posArray[bus]]._lat + ", lon: " + rutes.puntos[posArray[bus]]._lon)
             autobusesRef.update({
-                "latLong": new Firestore.GeoPoint(parseFloat(rutes[posArray[bus]]._lat) , parseFloat(rutes[posArray[bus]]._lon))
+                "latLong": new Firestore.GeoPoint(parseFloat(rutes.puntos[posArray[bus]]._lat) , parseFloat(rutes.puntos[posArray[bus]]._lon))
             })
             .then(function() {
                 console.log("Bus en camino... DATOS CAMBIADOS");
@@ -122,8 +164,8 @@ function createWindow() {
                 console.error("Ha ocurrido un error con la posicion! ", error);
             });
                 
-            await delay(200)
-            if(posArray[bus]  < rutes.length){
+            await delay(230)
+            if(posArray[bus]  < rutes.puntos.length){
                 console.log("POS " + bus + ": " + posArray[bus] )
                 actualizarPosicion()
             }else{

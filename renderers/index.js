@@ -96,21 +96,12 @@ ipcRenderer.on('rutes', (event, rutes) => {
       tr.querySelectorAll('td button').forEach(button => {
         button.addEventListener('click', (e) => {
           console.log(tr.id)
-          var selRutas = document.getElementById(selectRutas)
-          var ruta = selRutas.options[selRutas.selectedIndex].value;
+          //var selRutas = document.getElementById(selectRutas)
+          //var ruta = selRutas.options[selRutas.selectedIndex].value;
             
-          ipcRenderer.send('lanzarBus', tr.id, ruta)
+          ipcRenderer.send('lanzarBus', tr.id, rutes)
         
         })
       })
     })
   })
-
-  
-ipcRenderer.on('rutes', (event, rutes) => {
-  // get the todoList ul
-  rutas = rutes
-  console.log(rutes)
-  const tablaRutas = document.getElementById('selectRuta')
-
-})
