@@ -8,47 +8,29 @@ const cargarJsonEventListener = (e) => {
 
 }
 
+
+
 document.getElementById("bJson").addEventListener('click', (e) => {
   ipcRenderer.send('cargarJson')
 })
 
-ipcRenderer.on('pro', (event, rutes) => {
+ipcRenderer.on('rutes', (event, rutes) => {
   // get the todoList ul
   console.log(rutes)
   var html = ""
   const selectRutas = document.getElementById('selectRuta')
 
   rutes.forEach(element => {
-    html = `<option value="${element.mapValue.fields.idRuta.stringValue}">${element.mapValue.fields.idRuta.stringValue}</option>` + html;
+    html = `<option value="${element}">${element}</option>` + html;
 
   });
 
   console.log(html);
 
-  
-  // create html string
-  /*const rutaItems = rutes.reduce((html, ruta) => {
-    console.log(ruta)
-
-    /*html += `<option value="${ruta}"></option>`
-    
-    `<tr id= "${bus.id.stringValue}">
-            <td>${bus.nombre.stringValue}</td>
-            <td>${bus.latLong.geoPointValue.latitude}</td>
-            <td>${bus.latLong.geoPointValue.longitude}</td>
-            <td><button class="uk-button uk-button-default" type="button">LANZAR!</button></td>
-        </tr>`
-
-    return html
-  }, '')*/
-
-  // set list html to the todo items
  selectRutas.innerHTML = html
 
 })
 
-// delete todo by its text value ( used below in event listener)
-// on receive todos
 ipcRenderer.on('buses', (event, buses) => {
   // get the todoList ul
   console.log(buses)
@@ -68,6 +50,18 @@ ipcRenderer.on('buses', (event, buses) => {
 
   // set list html to the todo items
   tablaBuses.innerHTML = busItems
+
+  tablaBuses.querySelectorAll('tr').forEach(tr => {
+    tr.querySelectorAll('td button').forEach(button => {
+      button.addEventListener('click', (e) => {
+        var selRutas = document.getElementById('selectRuta')
+        var ruta = selRutas.options[selRutas.selectedIndex].text
+        console.log(ruta)
+        ipcRenderer.send('lanzarBus', tr.id, ruta)
+      
+      })
+    })
+  })
 })
 
 ipcRenderer.on('posBus', (event, bus) => {
@@ -84,24 +78,3 @@ ipcRenderer.on('posBus', (event, bus) => {
   // set list html to the todo items
   trBus.innerHTML = busHtml
 })
-
-ipcRenderer.on('rutes', (event, rutes) => {
-    // get the todoList ul
-    rutas = rutes
-    console.log(rutes)
-    const tablaRutas = document.getElementById('buses')
- 
-    // add click handlers to delete the clicked todo
-    tablaRutas.querySelectorAll('tr').forEach(tr => {
-      tr.querySelectorAll('td button').forEach(button => {
-        button.addEventListener('click', (e) => {
-          console.log(tr.id)
-          //var selRutas = document.getElementById(selectRutas)
-          //var ruta = selRutas.options[selRutas.selectedIndex].value;
-            
-          ipcRenderer.send('lanzarBus', tr.id, rutes)
-        
-        })
-      })
-    })
-  })

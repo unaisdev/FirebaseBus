@@ -50,50 +50,78 @@ function createWindow() {
         file: path.join('renderers', 'index.html')
     })
 
-    var autobuses = firestore.collection('Autobus');
-    var rutas = firestore.collection('Ruta');
-    
-    var LineaA15 = JSON.parse(fs.readFileSync('recursos/LineaA-15.json', 'utf8'))
-    var LineaH6 = JSON.parse(fs.readFileSync('recursos/LineaH-6.json', 'utf8'))
-    var LineaE25 = JSON.parse(fs.readFileSync('recursos/LineaE-25.json', 'utf8'))
+
+    var autobusesF = firestore.collection('Autobus');
+    var rutasF = firestore.collection('Ruta');
 
     mainWindow.webContents.openDevTools()
+        //Cargamos JSONs desde local
+        var LineaA15 = JSON.parse(fs.readFileSync('recursos/LineaA-15.json', 'utf8'))
+        var LineaH6 = JSON.parse(fs.readFileSync('recursos/LineaH-6.json', 'utf8'))
+        var LineaE25 = JSON.parse(fs.readFileSync('recursos/LineaE-25.json', 'utf8'))
 
     var posArray = {}
-    var ruta = { id: [], puntos: [] }
+    var ruta = []
+    var lineas = []
     var buses = []
-    var rutes = []
+    let rutes = []
+
+    function leerRutasAutobuses(){
+
+
+    }
+
     
     mainWindow.once('show', () => {   
         
-        /*rutas.doc(LineaH6.ruta.idRuta).set(LineaH6).then(function() {
+        /*rutasF.doc(LineaH6.ruta.idRuta).set(LineaH6).then(function() {
             console.log("Document successfully written!");
-        });*/
+        });
         ruta.id.push(LineaA15.ruta.idRuta)
-        LineaA15.ruta.trk.forEach(element=> {
-            element.trkpt.forEach(element => {
-                ruta.puntos.push(element)
-            });
-        })
+*/
 
-        rutas.get()
+        /*LineaA15.ruta.trk.forEach(element=> {
+            element.trkpt.forEach(element => {
+                rutes.puntos.push(element)
+            });
+        })*/
+        console.log(rutes)
+        var coordenadas = []
+
+        rutasF.get()
         .then(snapshot => {
             snapshot.forEach(doc => {
-                rutes.push(doc._fieldsProto.ruta)
+                ruta.push(doc._fieldsProto.ruta)
             });
+            ruta.forEach(element => {
+                var linea = element.mapValue.fields.idRuta.stringValue
+                element.mapValue.fields.trk.arrayValue.values.forEach(element => {
+                    element.mapValue.fields.trkpt.arrayValue.values.forEach(element => {
+                        var coordenada = {
+                            _lat: element.mapValue.fields._lat.stringValue,
+                            _lon: element.mapValue.fields._lon.stringValue
+                        }
+                        coordenadas.push(coordenada)
+                    });
+                });
+                rutes[linea] = coordenadas
+                coordenadas = []
+                lineas.push(linea)
+                //rutes[linea] = idRutas.push()
+            });
+            mainWindow.send('rutes', lineas)        
 
         })
         .catch(err => {
             console.log('Error getting documents', err);
         });      
 
-        autobuses.get()
+        autobusesF.get()
             .then(snapshot => {
                 snapshot.forEach(doc => {
                     buses.push(doc._fieldsProto)
                 });
-                mainWindow.send('buses', buses)
-                mainWindow.send('rutes', ruta)                
+                mainWindow.send('buses', buses)        
 
             })
             .catch(err => {
@@ -101,7 +129,7 @@ function createWindow() {
             });      
     })
 
-    ipcMain.on('lanzarBus', (event, bus, rutes) => {
+    ipcMain.on('lanzarBus', (event, bus, linea) => {
 
         // This registration token comes from the client FCM SDKs.
 
@@ -111,8 +139,8 @@ function createWindow() {
               ttl: 3600 * 1000, // 1 hour in milliseconds
               priority: 'normal',
               notification: {
-                title: rutes.idRuta,
-                body: '$GOOG gained 11.80 points to close at 835.67, up 1.43% on the day.',
+                title: 'EEEEE',
+                body: 'aaaaaaaaaaaaaaa',
                 icon: 'stock_ticker_update',
                 color: '#f45342'
               }
@@ -122,9 +150,6 @@ function createWindow() {
 
           console.log("mensaje creado")
 
-        // Send a message to the device corresponding to the provided
-        // registration token.
-        var dryRun = true;
         admin.messaging().send(message)
         .then((response) => {
             // Response is a message ID string.
@@ -134,12 +159,11 @@ function createWindow() {
             console.log('Error sending message:', error);
         });
 
-        console.log("LLEGA?")
 
-        
         const autobusesRef = firestore.collection('Autobus').doc(bus);
         posArray[bus] = 1
-        console.log(posArray)
+        console.log(rutes)
+
 
         autobusesRef.onSnapshot(function(doc) {
             console.log("CAMBIOS ESCUCHADOS EN " + doc._fieldsProto.nombre.stringValue)
@@ -150,9 +174,10 @@ function createWindow() {
         actualizarPosicion()
 
         async function actualizarPosicion() {
-            console.log("lat: " + rutes.puntos[posArray[bus]]._lat + ", lon: " + rutes.puntos[posArray[bus]]._lon)
+            console.log("dentroactualizar" + linea)
+           // console.log("lat: " + rutes[linea][posArray[bus]]._lat + ", lon: " + rutes.puntos[posArray[bus]]._lon)
             autobusesRef.update({
-                "latLong": new Firestore.GeoPoint(parseFloat(rutes.puntos[posArray[bus]]._lat) , parseFloat(rutes.puntos[posArray[bus]]._lon))
+                "latLong": new Firestore.GeoPoint(parseFloat(rutes[linea][posArray[bus]]._lat) , parseFloat(rutes[linea][posArray[bus]]._lon))
             })
             .then(function() {
                 console.log("Bus en camino... DATOS CAMBIADOS");
@@ -164,8 +189,8 @@ function createWindow() {
                 console.error("Ha ocurrido un error con la posicion! ", error);
             });
                 
-            await delay(230)
-            if(posArray[bus]  < rutes.puntos.length){
+            await delay(220)
+            if(posArray[bus]  < rutes[linea].length){
                 console.log("POS " + bus + ": " + posArray[bus] )
                 actualizarPosicion()
             }else{
