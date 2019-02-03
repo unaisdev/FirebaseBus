@@ -8,12 +8,6 @@ const cargarJsonEventListener = (e) => {
 
 }
 
-
-
-document.getElementById("bJson").addEventListener('click', (e) => {
-  ipcRenderer.send('cargarJson')
-})
-
 ipcRenderer.on('rutes', (event, rutes) => {
   // get the todoList ul
   console.log(rutes)

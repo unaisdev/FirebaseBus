@@ -25,10 +25,6 @@ const firestore = new Firestore({
 });
 
 require('electron-reload')(__dirname);
-
-// definimos `window`, acá vamos a guardar la instancia de BrowserWindow actual
-let window;
-
 // cuando nuestra app haya terminado de iniciar va a disparar el evento `ready`
 // lo escuchamos y ejecutamos la función `createWindow`
 app.on('ready', createWindow);
@@ -44,47 +40,36 @@ app.on('window-all-closed', () => {
 
 // definimos la función `createWindow`
 function createWindow() {
-	// instanciamos BrowserWindow, esto va a iniciar un proceso `renderer`
+	// instanciamos mainWindow, esto va a iniciar un proceso `renderer`
     let mainWindow = new Window({
-
         file: path.join('renderers', 'index.html')
     })
 
-
+    //Apuntamos hacia que colecion queremos atacar en firebase
     var autobusesF = firestore.collection('Autobus');
     var rutasF = firestore.collection('Ruta');
 
+    //Abrimos la ventana de developer en electron
     mainWindow.webContents.openDevTools()
-        //Cargamos JSONs desde local
-        var LineaA15 = JSON.parse(fs.readFileSync('recursos/LineaA-15.json', 'utf8'))
-        var LineaH6 = JSON.parse(fs.readFileSync('recursos/LineaH-6.json', 'utf8'))
-        var LineaE25 = JSON.parse(fs.readFileSync('recursos/LineaE-25.json', 'utf8'))
 
+    //Contador con el id del bus para ir cogiendo cada punto del array que le corresponde a ese bus
     var posArray = {}
+    //Variable aux para recoger el array de rutas que tenemos en firebase
     var ruta = []
+    //Array strings con el id de cada linea para el select 
     var lineas = []
+    //Buses recogidos
     var buses = []
+    //Array de posiciones definidas a una linea, para lanzar el autobus sobre ello y ir modificando
     let rutes = []
-
-    function leerRutasAutobuses(){
-
-
-    }
-
     
     mainWindow.once('show', () => {   
         
-        /*rutasF.doc(LineaH6.ruta.idRuta).set(LineaH6).then(function() {
+        /* Con este codigo, subimos el json de la Linea directamente a Firebase.
+        rutasF.doc(LineaH6.ruta.idRuta).set(LineaH6).then(function() {
             console.log("Document successfully written!");
-        });
-        ruta.id.push(LineaA15.ruta.idRuta)
-*/
+        }); */
 
-        /*LineaA15.ruta.trk.forEach(element=> {
-            element.trkpt.forEach(element => {
-                rutes.puntos.push(element)
-            });
-        })*/
         console.log(rutes)
         var coordenadas = []
 
@@ -93,6 +78,7 @@ function createWindow() {
             snapshot.forEach(doc => {
                 ruta.push(doc._fieldsProto.ruta)
             });
+            //De cada Linea que tenemos en Firebase, recogemos su id, y todo el recorrido que realiza 
             ruta.forEach(element => {
                 var linea = element.mapValue.fields.idRuta.stringValue
                 element.mapValue.fields.trk.arrayValue.values.forEach(element => {
@@ -104,11 +90,12 @@ function createWindow() {
                         coordenadas.push(coordenada)
                     });
                 });
+                //En un array con el id de esa linea, guardamos todos sus puntos
                 rutes[linea] = coordenadas
                 coordenadas = []
                 lineas.push(linea)
-                //rutes[linea] = idRutas.push()
             });
+            //mandamos a que cargue el select de la ventana principal
             mainWindow.send('rutes', lineas)        
 
         })
@@ -116,6 +103,7 @@ function createWindow() {
             console.log('Error getting documents', err);
         });      
 
+        //Recogemos los autobuses para cargarlos en la tabla
         autobusesF.get()
             .then(snapshot => {
                 snapshot.forEach(doc => {
@@ -129,11 +117,19 @@ function createWindow() {
             });      
     })
 
+    //Metodo que pone en marcha un bus
     ipcMain.on('lanzarBus', (event, bus, linea) => {
+        /* Se envia una notificacion cada vez que se lanza un bus
+        el texto que se escribe en la notificacion es el del Title y el Body, 
+         bastante customizable. 
+         
+         Siempre y cuando el cliente este suscrito a un Topic, sino no le llegaran
+        esas notificaciones, se podria hacer en la app una zona de suscripciones a lineas,
+        retrasos, obras, y asi cuando se quiera enviar una alerta, va dirigida solo a los usuarios
+        que han elegido ese Topic. A los demás solo se les mostraria en otra seccion de la aplicación.
 
-        // This registration token comes from the client FCM SDKs.
+         */
 
-        // See documentation on defining a message payload.
         var message = {
             android: {
               ttl: 3600 * 1000, // 1 hour in milliseconds
@@ -159,12 +155,16 @@ function createWindow() {
             console.log('Error sending message:', error);
         });
 
+        //////////////////////////////////////////////////////////////////
 
+        //Recogemos el bus que vamos a poner en marcha
         const autobusesRef = firestore.collection('Autobus').doc(bus);
+        //Le damos su hueco para que el continue siempre desde su posicion
         posArray[bus] = 1
-        console.log(rutes)
+        
+        //console.log(rutes)
 
-
+        //Hacemos que se modifique en la aplicacion los valores que se van cambiando en firebase para verlo en tiempo real
         autobusesRef.onSnapshot(function(doc) {
             console.log("CAMBIOS ESCUCHADOS EN " + doc._fieldsProto.nombre.stringValue)
 
@@ -173,13 +173,16 @@ function createWindow() {
         
         actualizarPosicion()
 
+        //Ejecutamos una funcion asincrona cada 220 mlsg para que la posicion del bus vaya cambiando
         async function actualizarPosicion() {
             console.log("dentroactualizar" + linea)
            // console.log("lat: " + rutes[linea][posArray[bus]]._lat + ", lon: " + rutes.puntos[posArray[bus]]._lon)
             autobusesRef.update({
+                //Con la referencia ya, le cambiamos la latitud y la longitud, por la que tenemos de la ruta y se actualiza
                 "latLong": new Firestore.GeoPoint(parseFloat(rutes[linea][posArray[bus]]._lat) , parseFloat(rutes[linea][posArray[bus]]._lon))
             })
             .then(function() {
+                //Si todo sale bien, le sumamos en la posicion 1 mas para que vaya al siguiente punto
                 console.log("Bus en camino... DATOS CAMBIADOS");
                 posArray[bus] = posArray[bus] + 1
 
@@ -190,6 +193,7 @@ function createWindow() {
             });
                 
             await delay(220)
+            //Y hasta que no llegue a acabar de realizar la ruta el bus, no parará
             if(posArray[bus]  < rutes[linea].length){
                 console.log("POS " + bus + ": " + posArray[bus] )
                 actualizarPosicion()
@@ -199,26 +203,7 @@ function createWindow() {
         }
         
       })
-
-      ipcMain.on('newBus', () => {
-        // if addTodoWin does not already exist
-        if (!newBus) {
-          // create a new add todo window
-          newBus = new Window({
-            file: path.join('renderer', 'add.html'),
-            width: 400,
-            height: 400,
-            // close with the main window
-            parent: mainWindow
-          })
-    
-          // cleanup
-          newBus.on('closed', () => {
-            newBus = null
-          })
-        }
-      })
-
+      
       ipcMain.on('closed', () => {
 		// por último escuchamos el evento `closed` de la ventana para limpar la variable `window`
 		// de esta forma permitimos matar la ventana sin matar al aplicación
